@@ -1,0 +1,4 @@
+project details :
+ - pipeline ci/cd terrform provisioning for EKS cluster 
+ - pipeline App deploy 
+ - CI pipeline for code build , test and dockerize 
