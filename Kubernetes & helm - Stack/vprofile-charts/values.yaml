@@ -1,0 +1,46 @@
+app:
+  name: vproapp
+  image: registry.gitlab.com/gitops7080923/vpro-code
+  tag: 94e12436fc91f561a0d5ed1ddd81c35f2e0909ae
+  replicas: 1
+  port: 8080
+
+database:
+  name: vprodb
+  image: vprocontainers/vprofiledb
+  tag: latest
+  port: 3306
+  storage: 3Gi
+  storageClass: gp2
+
+memcached:
+  name: vpromc
+  image: memcached
+  tag: latest
+  port: 11211
+
+rabbitmq:
+  name: vpromq01
+  image: rabbitmq
+  tag: latest
+  port: 5672
+
+initContainers:
+  busybox:
+    image: busybox
+    tag: latest
+
+ingress:
+  host: vprofile.hkhinfoteck.xyz
+  className: nginx
+
+secrets:
+  dbPass: dnByb2RicGFzcw==
+  rmqPass: Z3Vlc3Q=
+
+dockerRegistry:
+  enabled: true
+  name: gitlab-registry-secret
+  server: ""
+  username: ""
+  password: ""

@@ -1,0 +1,85 @@
+stages:
+  - lint
+  - package
+  - deploy
+  - drift-check
+
+variables:
+  HELM_CHART_PATH: "./vprofile-charts"
+  CHART_NAME: "vprofile-charts"
+  EKS_CLUSTER_NAME: "vprofile-eks-cluster"
+  AWS_DEFAULT_REGION: "us-east-1"
+
+helm-lint:
+  stage: lint
+  image: alpine:latest
+  tags:
+    - ec2_2
+  before_script:
+    - apk add --no-cache curl bash openssl
+    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  script:
+    - helm lint $HELM_CHART_PATH
+  only:
+    - merge_requests
+    - main
+
+helm-package:
+  stage: package
+  image: alpine:latest
+  tags:
+    - ec2_2
+  before_script:
+    - apk add --no-cache curl bash openssl
+    - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  script:
+    - helm package $HELM_CHART_PATH
+    - mkdir -p charts
+    - mv *.tgz charts/
+  artifacts:
+    paths:
+      - charts/
+    expire_in: 1 week
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  image: alpine/k8s:1.28.4
+  tags:
+    - ec2_2
+  before_script:
+    - apk add --no-cache aws-cli
+    - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME
+  script:
+    - |
+      helm upgrade --install vprofile $HELM_CHART_PATH --namespace vprofile --create-namespace \
+        --set dockerRegistry.server="$DOCKER_REGISTRY_SERVER" \
+        --set dockerRegistry.username="$DOCKER_REGISTRY_USERNAME" \
+        --set dockerRegistry.password="$DOCKER_REGISTRY_PASSWORD"
+  only:
+    - main
+    - schedules
+
+drift-detection:
+  stage: drift-check
+  image: alpine/k8s:1.28.4
+  tags:
+    - ec2_2
+  before_script:
+    - apk add --no-cache aws-cli
+    - aws eks update-kubeconfig --region $AWS_DEFAULT_REGION --name $EKS_CLUSTER_NAME
+  script:
+    - |
+      helm diff upgrade vprofile $HELM_CHART_PATH --namespace vprofile \
+        --set dockerRegistry.server="$DOCKER_REGISTRY_SERVER" \
+        --set dockerRegistry.username="$DOCKER_REGISTRY_USERNAME" \
+        --set dockerRegistry.password="$DOCKER_REGISTRY_PASSWORD" || echo "Drift detected"
+    - |
+      helm upgrade --install vprofile $HELM_CHART_PATH --namespace vprofile --create-namespace --dry-run \
+        --set dockerRegistry.server="$DOCKER_REGISTRY_SERVER" \
+        --set dockerRegistry.username="$DOCKER_REGISTRY_USERNAME" \
+        --set dockerRegistry.password="$DOCKER_REGISTRY_PASSWORD"
+  only:
+    - schedules
+  allow_failure: true

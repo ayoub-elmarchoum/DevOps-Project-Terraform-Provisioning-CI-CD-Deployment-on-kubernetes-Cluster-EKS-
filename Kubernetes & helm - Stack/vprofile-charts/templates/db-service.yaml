@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.database.name }}
+spec:
+  ports:
+  - port: {{ .Values.database.port }}
+    targetPort: vprodb-port
+    protocol: TCP
+  selector:
+    app: {{ .Values.database.name }}
+  type: ClusterIP
