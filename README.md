@@ -59,7 +59,7 @@ Contains:
    - Verify deployment health and rollback if needed  
 
 ### 🖼 Pipeline Diagram
-![GitLab Pipelines Workflow](Gitalb\ Pipelines\ Workflow.png)
+![GitLab Pipelines Workflow](GitLab_Pipelines_Workflow.png)
 ---
 
 ## 🧰 Tools & Technologies
