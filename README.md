@@ -58,6 +58,8 @@ Contains:
    - Deploy the Helm chart to EKS  
    - Verify deployment health and rollback if needed  
 
+### 🖼 Pipeline Diagram
+![GitLab Pipelines Workflow](Gitalb Pipelines Workflow.png)
 ---
 
 ## 🧰 Tools & Technologies
